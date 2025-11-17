@@ -1,0 +1,40 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "bento/ubuntu-24.04"
+  config.vm.box_version = "202502.21.0"
+
+  config.vm.define "worker1" do |worker1|
+    worker1.vm.network "private_network", ip: "172.16.247.101"
+    memory = "4096"
+    worker1.vm.hostname = "worker1-k8s.host3.africodes.com"
+  end
+
+  config.vm.define "worker2" do |worker2|
+    worker2.vm.network "private_network", ip: "172.16.247.102"
+    memory = "4096"
+    worker2.vm.hostname = "worker2-k8s.host3.africodes.com"
+  end
+
+   config.vm.provider "vmware_desktop" do |vmw|
+     vmw.gui = true
+     vmw.allowlist_verified = true
+   end
+
+   config.vm.provision "shell", inline: <<-SHELL
+     echo "172.16.247.100 control1-k8s control1-k8s.host3.africodes.com" >> /etc/hosts
+     echo "172.16.247.101 worker1-k8s worker1-k8s.host3.africodes.com" >> /etc/hosts
+     echo "172.16.247.102 worker2-k8s worker2-k8s.host3.africodes.com" >> /etc/hosts
+     useradd  -m -s /bin/bash -c "Kubernetes Administrator" adminkube
+     usermod -aG sudo adminkube
+     #sudo echo "admin-kube ALL = (ALL:ALL) NOPASSWD:ALL >> /etc/sudoers"
+     apt-get update
+     # Nodes to be upgraded from within the system due to limitation in certain prompts requiring interactive response
+     #apt -y upgrade
+     # Password for dedicated Kubernetes Linux Admin. Password might also be set it provisioner bash script for the cluster
+     echo -ne "passwd adminkube <<-EOF\nNigeria1\nNigeria1\nEOF" > pass.sh
+     bash pass.sh && rm -f pass.sh
+   SHELL
+end
