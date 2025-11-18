@@ -9,6 +9,10 @@ CNI_PLUGIN_VERSION="1.8.0"
 NERDCTL_VERSION="2.2.0"
 CRICTL_VERSION="1.34.0"
 # Set Operating System Architecture
+
+# Disable swap space persistently
+(sudo crontab -l 2>/dev/null) | sudo crontab - || true
+
 if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
   echo "Architecture is $K8S_AARCH_PRETTY"
   if ["$K8S_OS_VERSION" == "Ubuntu"]; then
@@ -24,6 +28,8 @@ if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
     sudo mkdir -p /etc/containerd/
     sudo bash -c "containerd config default >  /etc/containerd/config.toml"
     sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml 
+    sudo systemctl restart containerd
+
 
 
     # Check logic, if systemd runs well, clean up downloaded files
@@ -54,5 +60,5 @@ if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
 
   fi
   else
-  echo "Architecture Unkown"
+  echo "Architecture Unnkown"
 fi
