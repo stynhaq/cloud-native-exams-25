@@ -6,6 +6,8 @@ K8S_OS_VERSION=$(cat /etc/os-release | grep ^NAME  | sed -e 's/NAME="//g' | tr -
 CONTAINERD_VERSION="2.2.0"
 RUN_C_VERSION="1.3.3"
 CNI_PLUGIN_VERSION="1.8.0"
+NERDCTL_VERSION="2.2.0"
+CRICTL_VERSION="1.34.0"
 # Set Operating System Architecture
 if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
   echo "Architecture is $K8S_AARCH_PRETTY"
@@ -19,6 +21,11 @@ if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
     sudo mv containerd.service /etc/systemd/system/containerd.service 
     sudo systemctl daemon-reload
     sudo systemctl enable --now containerd
+    sudo mkdir -p /etc/containerd/
+    sudo bash -c "containerd config default >  /etc/containerd/config.toml"
+    sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml 
+
+
     # Check logic, if systemd runs well, clean up downloaded files
 
     # Install Runc
@@ -30,6 +37,20 @@ if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
     wget -nc https://github.com/containernetworking/plugins/releases/download/v$CNI_PLUGIN_VERSION/cni-plugins-linux-$K8S_AARCH_PRETTY-v$CNI_PLUGIN_VERSION.tgz
     sudo mkdir -p /opt/cni/bin
     sudo tar Cxzvf /opt/cni/bin cni-plugins-linux-$K8S_AARCH_PRETTY-v$CNI_PLUGIN_VERSION.tgz
+    rm -f cni-plugins-linux-$K8S_AARCH_PRETTY-v$CNI_PLUGIN_VERSION.tgz
+
+    #Nerdctl install
+    wget -nc https://github.com/containerd/nerdctl/releases/download/v$NERDCTL_VERSION/nerdctl-$NERDCTL_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz
+    sudo tar Cxzvf /usr/local/bin nerdctl-$NERDCTL_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz
+    rm -f nerdctl-$NERDCTL_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz
+
+    # CRICTL Download
+    wget -nc https://github.com/kubernetes-sigs/cri-tools/releases/download/v$CRICTL_VERSION/crictl-v$CRICTL_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz
+    sudo tar Czxvf /usr/local/bin crictl-v$CRICTL_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz 
+    rm -f crictl-v$CRICTL_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz 
+    #Configuring the systemd cgroup driver 
+    # Change [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc.options]
+    #  "SystemdCgroup = false" to  "SystemdCgroup = true" on the /etc/containerd/config.toml
 
   fi
   else
