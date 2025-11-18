@@ -12,3 +12,12 @@
 | control1-k8s | 172.16.247.100/24 | control1-k8s.host3.africodes.com | Control Node 1 |
 | worker1-k8s  | 172.16.247.101/24 | worker1-k8s.host3.africodes.com  | Worker Node 1  |
 | worker2-k8s  | 172.16.247.102/24 | worker2-k8s.host3.africodes.com  | Worker Node 2  |
+
+## Prerequisites
+
+- CRI (containerd)
+- CNI (Calico Operator)
+- kubelet on Worker Nodes
+- kubeadm on Control Node
+- kubectl on Control Node
+- OpenSSL x509 Server on Control Node
