@@ -1,5 +1,11 @@
 # Setup of Kubernetes Cluster
 
+## Summary Steps
+
+- Disable swap on all nodes
+- Install a CRI (containerd preferred but CRI-O or cri-dockerd also available)
+-
+
 Ensure that Swap is disabled persistently
 `sudo swapoff -a`
 To make it persistent on reboot, either do
