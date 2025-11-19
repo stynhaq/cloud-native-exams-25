@@ -8,14 +8,20 @@ RUN_C_VERSION="1.3.3"
 CNI_PLUGIN_VERSION="1.8.0"
 NERDCTL_VERSION="2.2.0"
 CRICTL_VERSION="1.34.0"
-# Set Operating System Architecture
+KUBEADM_VERSION="1.33"
+KUBECTL_VERSION="1.33"
+KUBELET_VERSION="1.33"
+POD_CIDR="10.250.0.0/16"
+CONTROL_PLANE_ENDPOINT="control-k8s"
 
 # Disable swap space persistently
-(sudo crontab -l 2>/dev/null) | sudo crontab - || true
+sudo swapoff -a
+(crontab -l 2>/dev/null; echo "@reboot /sbin/swapoff -a") | crontab - || true
 
+# Set Operating System Architecture
 if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
   echo "Architecture is $K8S_AARCH_PRETTY"
-  if ["$K8S_OS_VERSION" == "Ubuntu"]; then
+  if [ "$K8S_OS_VERSION" == "Ubuntu" ]; then
     # Create a temporary file in user's home directory to work from
     wget -nc https://github.com/containerd/containerd/releases/download/v$CONTAINERD_VERSION/containerd-$CONTAINERD_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz
     sudo tar Cxzvf /usr/local containerd-$CONTAINERD_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz
@@ -62,3 +68,43 @@ if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
   else
   echo "Architecture Unnkown"
 fi
+
+# Kubernetes Components
+sudo apt update
+sudo apt install -y apt-transport-https ca-certificates curl gpg
+if [ ! -d /etc/apt/keyrings ]; then
+ sudo mkdir -p -m 755 /etc/apt/keyrings
+fi
+if [ -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg ]; then
+  rm /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+fi
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v"$KUBEADM_VERSION"/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# Add Kubernetes Apt repo
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v'"$KUBEADM_VERSION"'/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+sudo systemctl enable --now kubelet
+
+
+# Enable Netfilter 
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+# sysctl params required by setup, params persist across reboots
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+# Apply sysctl params without reboot
+sudo sysctl --system
+
+sudo kubeadm init --control-plane-endpoint $CONTROL_PLANE_ENDPOINT --pod-network-cidr $POD_CIDR
