@@ -20,10 +20,11 @@ sudo swapoff -a
 
 # Set Operating System Architecture
 if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
-  echo "Architecture is $K8S_AARCH_PRETTY"
      if [ "$K8S_OS_ARCH" == "x86_64" ]; then
           K8S_AARCH_PRETTY="amd64"
    fi
+  echo "Architecture is $K8S_AARCH_PRETTY"
+
   if [ "$K8S_OS_VERSION" == "Ubuntu" ]; then
     # Create a temporary file in user's home directory to work from
     wget -nc https://github.com/containerd/containerd/releases/download/v$CONTAINERD_VERSION/containerd-$CONTAINERD_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz
@@ -69,9 +70,12 @@ if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
 
   fi
   else
-  echo "Architecture Unknown"
+  echo "Architecture Unknown or not yet supported"
+  # RHEL based logic to be added
+  exit 1
 fi
 
+if [ "$K8S_OS_VERSION" == "Ubuntu" ]; then
 # Kubernetes Components
 sudo apt update
 sudo apt install -y apt-transport-https ca-certificates curl gpg
@@ -125,7 +129,7 @@ EOF
 
 sudo chmod 600 /etc/netplan/*.yaml
 sudo rm -f /etc/netplan/50-cloud-init.yaml
-sudo netplan apply
+sudo netplan apply -f /etc/netplan/01-netcfg.yaml
 
 # Apply sysctl params without reboot
 sudo sysctl --system
@@ -134,3 +138,8 @@ sudo kubeadm init --control-plane-endpoint $CONTROL_PLANE_ENDPOINT --pod-network
 
 # CNI Setup. Logic to be added to Select Calico or Cilium. 
 # If Calico, option of either using eBPF or iptables as dataplane
+else
+  echo "OS Version Unknown or not yet supported"
+  # RHEL based logic to be added
+  exit 1
+fi
