@@ -108,3 +108,6 @@ EOF
 sudo sysctl --system
 
 sudo kubeadm init --control-plane-endpoint $CONTROL_PLANE_ENDPOINT --pod-network-cidr $POD_CIDR
+
+# CNI Setup. Logic to be added to Select Calico or Cilium. 
+# If Calico, option of either using eBPF or iptables as dataplane
