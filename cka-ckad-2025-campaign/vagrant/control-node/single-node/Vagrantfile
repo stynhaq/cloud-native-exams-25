@@ -33,7 +33,6 @@ Vagrant.configure("2") do |config|
      echo -ne "passwd adminkube <<-EOF\nNigeria1\nNigeria1\nEOF" > pass.sh
      bash pass.sh && rm -f pass.sh
      mkdir -p /home/adminkube/tmp
-     cd /home/adminkube/tmp
-     git clone https://github.com/stynhaq/cloud-native-exams-25.git
+     git clone https://github.com/stynhaq/cloud-native-exams-25.git /home/adminkube/tmp
    SHELL
 end
