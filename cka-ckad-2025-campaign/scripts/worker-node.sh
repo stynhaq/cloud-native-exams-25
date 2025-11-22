@@ -20,6 +20,9 @@ sudo swapoff -a
 
 # Set Operating System Architecture
 if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
+     if [ "$K8S_OS_ARCH" == "x86_64" ]; then
+          K8S_AARCH_PRETTY="amd64"
+   fi
   echo "Architecture is $K8S_AARCH_PRETTY"
   if [ "$K8S_OS_VERSION" == "Ubuntu" ]; then
     # Create a temporary file in user's home directory to work from
@@ -66,9 +69,12 @@ if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
 
   fi
   else
-  echo "Architecture Unknown"
+    echo "Architecture Unknown or not yet supported"
+  # RHEL based logic to be added
+  exit 1
 fi
 
+if [ "$K8S_OS_VERSION" == "Ubuntu" ]; then
 # Kubernetes Components
 sudo apt update
 sudo apt install -y apt-transport-https ca-certificates curl gpg
@@ -104,5 +110,53 @@ net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
 EOF
 
+if [[ $(hostname) == worker1* ]]; then
+cat <<EOF | sudo tee /etc/netplan/01-netcfg.yaml
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.145.21/24
+      routes:
+        - to: default
+          via: 192.168.145.2
+      nameservers:
+        addresses:
+          - 8.8.8.8
+EOF
+
+sudo chmod 600 /etc/netplan/*.yaml
+sudo rm -f /etc/netplan/50-cloud-init.yaml
+sudo netplan apply -f /etc/netplan/01-netcfg.yaml
+
+elif [[ $(hostname) == worker2* ]]; then
+cat <<EOF | sudo tee /etc/netplan/01-netcfg.yaml
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.145.22/24
+      routes:
+        - to: default
+          via: 192.168.145.2
+      nameservers:
+        addresses:
+          - 8.8.8.8
+EOF
+
+sudo chmod 600 /etc/netplan/*.yaml
+sudo rm -f /etc/netplan/50-cloud-init.yaml
+sudo netplan apply -f /etc/netplan/01-netcfg.yaml
+
+fi
+
 # Apply sysctl params without reboot
 sudo sysctl --system
+
+else
+  echo "OS Version Unknown or not yet supported"
+  # RHEL based logic to be added
+  exit 1
+fi

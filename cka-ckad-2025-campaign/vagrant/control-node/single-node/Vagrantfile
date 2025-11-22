@@ -5,6 +5,8 @@ Vagrant.configure("2") do |config|
 
   config.vm.box = "bento/ubuntu-24.04"
   config.vm.box_version = "202502.21.0"
+  #config.vm.box_version = "202510.26.0"
+
 
   config.vm.define "control1" do |control1|
     control1.vm.network "private_network", ip: "172.16.247.100"
@@ -19,6 +21,7 @@ Vagrant.configure("2") do |config|
    end
 
    config.vm.provision "shell", inline: <<-SHELL
+     echo "172.16.247.100 control-k8s control-k8s.host3.africodes.com" >> /etc/hosts
      echo "172.16.247.100 control1-k8s control1-k8s.host3.africodes.com" >> /etc/hosts
      echo "172.16.247.101 worker1-k8s worker1-k8s.host3.africodes.com" >> /etc/hosts
      echo "172.16.247.102 worker2-k8s worker2-k8s.host3.africodes.com" >> /etc/hosts
@@ -34,5 +37,6 @@ Vagrant.configure("2") do |config|
      bash pass.sh && rm -f pass.sh
      mkdir -p /home/adminkube/tmp
      git clone https://github.com/stynhaq/cloud-native-exams-25.git /home/adminkube/tmp
+     sudo chown -R adminkube:adminkube /home/adminkube/tmp
    SHELL
 end

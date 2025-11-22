@@ -5,6 +5,12 @@
 3. Also, ensure that the VMware plugin is installed using `vagrant plugin install vagrant-vmware-desktop`
 4. Ensure VMware workstation or Fusion is instslled and running
 
+Vagrant binary is available on [Vagrant Binary Download](https://developer.hashicorp.com/vagrant/install). Choose the right setup for your operating system architecture.
+
+The Vagrant utility can be downloaded from [Vagrant VMware Utility](https://developer.hashicorp.com/vagrant/install/vmware). Also, select for your computer architecture.
+
+Finally, install the VMware plugin as provided in item #4 above.
+
 ## IP Addressing on Apple Mac
 
 | Hostname     | IP Address        | FQDN                             | Description    |
