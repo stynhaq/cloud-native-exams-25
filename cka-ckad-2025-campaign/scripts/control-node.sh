@@ -21,6 +21,9 @@ sudo swapoff -a
 # Set Operating System Architecture
 if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
   echo "Architecture is $K8S_AARCH_PRETTY"
+     if [ "$K8S_OS_ARCH" == "x86_64" ]; then
+          K8S_AARCH_PRETTY="amd64"
+   fi
   if [ "$K8S_OS_VERSION" == "Ubuntu" ]; then
     # Create a temporary file in user's home directory to work from
     wget -nc https://github.com/containerd/containerd/releases/download/v$CONTAINERD_VERSION/containerd-$CONTAINERD_VERSION-linux-$K8S_AARCH_PRETTY.tar.gz
@@ -66,7 +69,7 @@ if [ "$K8S_OS_ARCH" == "$(arch)" ]; then
 
   fi
   else
-  echo "Architecture Unnkown"
+  echo "Architecture Unknown"
 fi
 
 # Kubernetes Components
@@ -76,7 +79,7 @@ if [ ! -d /etc/apt/keyrings ]; then
  sudo mkdir -p -m 755 /etc/apt/keyrings
 fi
 if [ -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg ]; then
-  rm /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  rm -f /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 fi
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v"$KUBEADM_VERSION"/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
@@ -103,6 +106,26 @@ net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
 EOF
+
+# Change IP Address of ETH0 Interface to Static IP
+cat <<EOF | sudo tee /etc/netplan/01-netcfg.yaml
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.145.20/24
+      routes:
+        - to: default
+          via: 192.168.145.2
+      nameservers:
+        addresses:
+          - 8.8.8.8
+EOF
+
+sudo chmod 600 /etc/netplan/*.yaml
+sudo rm -f /etc/netplan/50-cloud-init.yaml
+sudo netplan apply
 
 # Apply sysctl params without reboot
 sudo sysctl --system
