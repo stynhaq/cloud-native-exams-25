@@ -78,7 +78,7 @@ fi
 if [ "$K8S_OS_VERSION" == "Ubuntu" ]; then
 # Kubernetes Components
 sudo apt update
-sudo apt install -y apt-transport-https ca-certificates curl gpg
+sudo apt install -y apt-transport-https ca-certificates curl gpg bash-completion
 if [ ! -d /etc/apt/keyrings ]; then
  sudo mkdir -p -m 755 /etc/apt/keyrings
 fi
