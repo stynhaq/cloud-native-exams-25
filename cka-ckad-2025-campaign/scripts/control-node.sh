@@ -123,7 +123,7 @@ network:
         - to: default
           via: 192.168.145.2
       nameservers:
-        addresses:
+        addresses: 
           - 8.8.8.8
 EOF
 
